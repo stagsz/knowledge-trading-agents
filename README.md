@@ -4,8 +4,9 @@ A self-contained, zero-build visual simulation of five AI agents that discover
 tasks, build skills, trade knowledge with one another, deliberate to agree on a
 shared goal, and produce value together.
 
-There is no install step, no backend, and no network access. The whole thing is
-plain HTML/CSS/JavaScript with a deterministic, seeded engine.
+There is no install step, no backend, and no network access required for the
+base simulation. The whole thing is plain HTML/CSS/JavaScript with a
+deterministic, seeded engine.
 
 ## Running it
 
@@ -13,10 +14,13 @@ Open `index.html` in any modern browser. That's it.
 
 ```
 knowledge-trading-agents/
-  index.html      # page structure
-  styles.css      # dashboard styling
-  simulation.js   # the engine (agents, tasks, trading, council, value)
-  app.js          # dashboard rendering + controls
+  index.html              # page structure
+  styles.css              # dashboard styling
+  simulation.js           # the engine (agents, tasks, trading, council, value)
+  app.js                  # dashboard rendering + controls
+  live-topics.js          # manual topic board (replaces procedural tasks)
+  llm-task-selector.js    # Level 1 LLM integration: agent task selection via API
+  obsidian-integration.js # auto-saves simulation events to an Obsidian vault
 ```
 
 Use the controls at the top:
@@ -24,6 +28,7 @@ Use the controls at the top:
 - **Play / Pause** — run the simulation continuously.
 - **Step** — advance exactly one round.
 - **Reset** — start a fresh run with a new random seed.
+- **Live Topics** — open the manual topic board (see below).
 - **Force deadlock** — (dev) make the council deadlock on demand to exercise the
   operator-decision flow without waiting for a natural near-tie.
 - **Speed** — slider from slow to fast.
@@ -121,11 +126,62 @@ metric tracks the running total.
 - **Agent cards** — per-agent skills, knowledge inventory, recent activity, and a
   net-worth sparkline.
 
+## Live Topics mode
+
+Click **Live Topics** to replace procedural task generation with a manual task
+board. You create topics in real-time; agents claim and resolve them.
+
+| Field | Range | Notes |
+|-------|-------|-------|
+| Title | text | Required |
+| Description | text | Optional context |
+| Domain | category | Defaults to "General" |
+| Difficulty | 0–1 | Higher = harder; affects agent success chance |
+| Reward | 50–500c | Credits awarded on success |
+
+Topics persist in `sessionStorage` for the lifetime of the tab. Use **Assign**
+to point a topic at a specific agent, then **Success / Failed** to resolve it.
+The main dashboard updates live.
+
+## LLM integration (Level 1)
+
+`llm-task-selector.js` replaces the deterministic EV calculation for task
+selection with a real LLM call. Each agent receives a prompt describing its
+current skills, credits, strategy, and the available task pool, and picks one
+task with a short rationale.
+
+Enable it after loading the simulation:
+
+```js
+sim.useLLMTaskSelection = true;
+```
+
+The selector caches responses, tracks call counts and token usage, and
+estimates cost. At roughly 300 tokens per call and five agents making ~4
+decisions per round, a full 1 000-round run costs approximately **$4.80 on
+Claude Haiku**. The API key is read from `localStorage` key `llm_api_key` or
+prompted on first use.
+
+See `HERMES_LLM_INTEGRATION.md` for the full roadmap of integration levels
+(council voting, strategy switching, marketplace pricing).
+
+## Obsidian integration
+
+`obsidian-integration.js` auto-saves key simulation events to an Obsidian
+vault. Captured events include simulation start/stop, goal completions and
+failures, agent strategy switches, deadlock resolutions, aggregate marketplace
+activity, and agent net-worth milestones.
+
+```js
+obsidianIntegration.init(sim, 'path/to/vault');
+```
+
 ## Notes
 
 - The engine is **deterministic** for a given seed; Reset picks a new random
   seed. Runs are reproducible.
-- The agents are **simulated / algorithmic** — no external model calls. The code
-  is structured so a model-backed reasoning mode could be layered on later.
+- The agents are **simulated / algorithmic** by default — no external model
+  calls. `llm-task-selector.js` layers real LLM reasoning on top without
+  touching the core engine.
 - The marketplace naturally reaches equilibrium as skills converge late in a
   run; Reset starts a fresh, livelier phase.
