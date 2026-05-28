@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head><title>Debug</title></head>
+<body style="background: #06122b; color: #e2e8f0; font-family: monospace; padding: 20px;">
+  <h1>Loading page with error catching...</h1>
+  <div id="log" style="background: #0f172a; padding: 20px; border-radius: 8px; max-height: 400px; overflow-y: auto;"></div>
+  
+  <script>
+    const log = document.getElementById('log');
+    const logs = [];
+    
+    function addLog(msg, type = 'log') {
+      logs.push(`[${type}] ${msg}`);
+      log.innerHTML = logs.map(l => `<div>${l}</div>`).join('');
+      console.log(msg);
+    }
+    
+    // Catch all errors
+    window.addEventListener('error', (e) => {
+      addLog(`ERROR: ${e.message} at ${e.filename}:${e.lineno}`, 'error');
+    });
+    
+    window.addEventListener('unhandledrejection', (e) => {
+      addLog(`UNHANDLED: ${e.reason}`, 'error');
+    });
+    
+    addLog('Page starting...');
+  </script>
+  
+  <script src="simulation.js"></script>
+  <script>
+    if (window.KTA) {
+      addLog('✓ simulation.js loaded, KTA exists');
+    } else {
+      addLog('✗ simulation.js loaded but KTA not found', 'error');
+    }
+  </script>
+  
+  <script src="llm-task-selector.js"></script>
+  <script>
+    if (window.LLMTaskSelector) {
+      addLog('✓ llm-task-selector.js loaded');
+    }
+    if (window.llmTaskSelector) {
+      addLog('✓ window.llmTaskSelector instantiated');
+    } else {
+      addLog('✗ window.llmTaskSelector NOT instantiated', 'warn');
+    }
+  </script>
+  
+  <script src="live-topics.js"></script>
+  <script>
+    if (window.LiveTopics) {
+      addLog('✓ live-topics.js loaded');
+    } else {
+      addLog('✗ LiveTopics NOT found', 'error');
+    }
+  </script>
+  
+  <script>
+    addLog('All scripts loaded. Ready to test LiveTopics.');
+    
+    // Try to create a test topic
+    const sim = {
+      agents: [
+        { id: 1, name: 'Alice', credits: 100, xp: 50, color: '#60a5fa', tasksDone: 0, tasksFailed: 0 },
+        { id: 2, name: 'Bob', credits: 150, xp: 75, color: '#34d399', tasksDone: 0, tasksFailed: 0 }
+      ],
+      totals: { tasksDone: 0, tasksFailed: 0 },
+      _emit: (type, text, color) => {
+        addLog(`EMIT: ${type} - ${text}`, 'event');
+      }
+    };
+    
+    try {
+      const lt = new LiveTopics(sim);
+      addLog('✓ LiveTopics instance created');
+      
+      const topic = lt.createTopic({
+        title: 'Test Topic',
+        description: 'Testing...',
+        domain: 'General',
+        difficulty: 0.5,
+        reward: 100
+      });
+      
+      addLog(`✓ Topic created: ${topic.title} (ID: ${topic.id})`);
+      addLog(`Stats: ${JSON.stringify(lt.getStats())}`);
+    } catch (e) {
+      addLog(`✗ Error: ${e.message}`, 'error');
+      addLog(`Stack: ${e.stack}`, 'error');
+    }
+  </script>
+</body>
+</html>

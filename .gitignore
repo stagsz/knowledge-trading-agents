@@ -1,0 +1,21 @@
+# OMC internal state
+.omc/
+
+# Local archives and operational artifacts
+_archive/
+
+# Node / build artifacts (if adding tooling later)
+node_modules/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Knowledge Trading Agents</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark"></span>
+      <div>
+        <h1>Knowledge Trading Agents</h1>
+        <p class="tagline">Five agents discover tasks, build skills, self-evaluate, and trade what they learn.</p>
+      </div>
+    </div>
+    <div class="controls">
+      <span class="round-pill">Round <b id="round-counter">0</b></span>
+      <button id="btn-play" class="btn btn-primary">▶ Play</button>
+      <button id="btn-step" class="btn">Step</button>
+      <button id="btn-reset" class="btn">Reset</button>
+      <button id="btn-deadlock" class="btn btn-dev" title="Dev: force the council to deadlock so the operator-decision modal appears">Force deadlock</button>
+      <label class="speed">
+        Speed
+        <input id="speed" type="range" min="80" max="1400" value="650" step="20" />
+      </label>
+      <label class="llm-toggle">
+        <input id="use-llm" type="checkbox" />
+        <span>Use LLM (Level 1)</span>
+      </label>
+      <button id="btn-llm-stats" class="btn btn-secondary" title="Show LLM token usage and cost" hidden>📊 LLM Stats</button>
+      <button id="btn-toggle-live-topics" class="btn btn-primary" title="Switch to/from live topic mode">🎯 Live Topics</button>
+    </div>
+  </header>
+
+  <!-- Live Topics Panel (hidden by default) -->
+  <div id="live-topics-panel" hidden class="live-topics-panel">
+    <div class="ltp-header">
+      <h2>Live Topics</h2>
+      <button id="btn-close-ltp" class="btn-close">✕</button>
+    </div>
+
+    <div class="ltp-creator">
+      <h3>Create Topic</h3>
+      <div class="form-group">
+        <label>Title</label>
+        <input id="ltp-title" type="text" placeholder="e.g., Implement OAuth" />
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <input id="ltp-description" type="text" placeholder="Brief description (optional)" />
+      </div>
+      <div class="form-group">
+        <label>Domain</label>
+        <select id="ltp-domain">
+          <option value="General">General</option>
+          <option value="Mathematics">Mathematics</option>
+          <option value="Physics">Physics</option>
+          <option value="Chemistry">Chemistry</option>
+          <option value="Biology">Biology</option>
+          <option value="History">History</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Difficulty (0–1)</label>
+        <input id="ltp-difficulty" type="range" min="0" max="1" step="0.1" value="0.5" />
+        <span id="ltp-difficulty-display">0.5</span>
+      </div>
+      <div class="form-group">
+        <label>Reward (credits)</label>
+        <input id="ltp-reward" type="number" min="50" max="500" value="100" />
+      </div>
+      <button id="btn-create-topic" class="btn btn-primary">+ Create Topic</button>
+    </div>
+
+    <div class="ltp-list">
+      <h3>Topics</h3>
+      <div class="topic-filter">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="open">Open</button>
+        <button class="filter-btn" data-filter="in_progress">In Progress</button>
+        <button class="filter-btn" data-filter="completed">Completed</button>
+      </div>
+      <div id="topics-container" class="topics-container">
+        <!-- Topics rendered here -->
+      </div>
+    </div>
+
+    <div class="ltp-stats">
+      <h3>Stats</h3>
+      <div id="ltp-stats-display" class="stats-grid">
+        <!-- Stats rendered here -->
+      </div>
+    </div>
+  </div>
+
+  <section class="metrics" id="metrics"></section>
+
+  <section class="panel council-panel">
+    <div class="council-head">
+      <h2>Council — shared topic &amp; goal</h2>
+      <span id="council-badge" class="council-badge"></span>
+    </div>
+    <p class="hint">The agents convene their sub-agencies, argue, and agree on one Topic + Goal to fulfil. Achieving or missing it triggers a fresh council.</p>
+    <div class="council-body">
+      <div class="mission" id="mission"></div>
+      <div class="deliberation" id="deliberation"></div>
+    </div>
+  </section>
+
+  <section class="panel portfolio-panel">
+    <div class="council-head">
+      <h2>Value portfolio</h2>
+      <span id="value-total" class="value-total"></span>
+    </div>
+    <p class="hint">Every fulfilled goal ships a deliverable. Its value comes from the skill and pooled knowledge invested; top contributors earn a dividend. Missed goals still ship a lower-value draft.</p>
+    <div class="portfolio" id="portfolio"></div>
+  </section>
+
+  <main class="layout">
+    <section class="panel network-panel">
+      <h2>Knowledge network</h2>
+      <p class="hint">Arcs show knowledge/data flowing between agents this round. Node glow = net worth.</p>
+      <svg id="network" viewBox="0 0 520 460" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="legend" id="legend"></div>
+    </section>
+
+    <section class="panel leaderboard-panel">
+      <h2>Leaderboard</h2>
+      <ol class="leaderboard" id="leaderboard"></ol>
+      <h2 class="ticker-title">Activity</h2>
+      <ul class="ticker" id="ticker"></ul>
+    </section>
+  </main>
+
+  <section class="agents" id="agents"></section>
+
+  <footer class="footer">
+    <span>Self-contained simulation — no network calls, no build step. Open <code>index.html</code> in any browser.</span>
+  </footer>
+
+  <div id="topic-modal" class="modal-overlay" hidden>
+    <div class="modal">
+      <span class="modal-tag">Council deadlocked</span>
+      <h2>The agents can't agree — your call</h2>
+      <p class="modal-sub">Deliberation ended in a near-tie that persuasion couldn't break. Pick the topic the agents should pursue.</p>
+      <div id="topic-choices" class="topic-choices"></div>
+    </div>
+  </div>
+
+  <script src="simulation.js"></script>
+  <script src="llm-task-selector.js"></script>
+  <script src="live-topics.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

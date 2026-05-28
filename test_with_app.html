@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head><title>Test App.js</title></head>
+<body style="background: #06122b; color: #e2e8f0;">
+  <h1>Loading app.js...</h1>
+  <p id="status">Init...</p>
+  
+  <!-- Minimal DOM elements that app.js needs -->
+  <div id="round-counter">0</div>
+  <button id="btn-play">▶ Play</button>
+  <button id="btn-step">Step</button>
+  <button id="btn-reset">Reset</button>
+  <button id="btn-deadlock">Deadlock</button>
+  <input id="speed" type="range" value="750" />
+  <input id="use-llm" type="checkbox" />
+  <button id="btn-llm-stats">Stats</button>
+  <div id="topic-modal" hidden></div>
+  <div id="topic-choices"></div>
+  <div id="legend"></div>
+  <svg id="network"></svg>
+  <div id="metrics"></div>
+  <div id="mission"></div>
+  <div id="deliberation"></div>
+  <div id="council-badge"></div>
+  <div id="portfolio"></div>
+  <div id="value-total"></div>
+  <div id="agents"></div>
+  <ol id="leaderboard"></ol>
+  <ol id="ticker"></ol>
+  
+  <script src="simulation.js"></script>
+  <script src="llm-task-selector.js"></script>
+  <script src="live-topics.js"></script>
+  <script src="app.js"></script>
+  
+  <script>
+    document.getElementById('status').textContent = 'Loaded!';
+  </script>
+</body>
+</html>
